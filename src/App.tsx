@@ -107,7 +107,7 @@ export default function App() {
           <section className={`result-column ${mode === "translator" ? "translator-result-column" : ""}`} aria-live="polite">
             {mode === "translator" ? (
               <><div className="result-header"><div><span className="step-label">02 / TRANSLATION</span><h2>Corporate, decoded.</h2></div></div>
-                {hasTranslated ? <div className="funny-translation"><div><strong>📩 WHAT THEY SAID:</strong><p>{translatorMessage}</p></div><div><strong>🤖 MESSAGE FOR YOU:</strong><p>{translatedMessage}</p></div></div> : <div className="empty-result"><div className="empty-icon"><Sparkles size={25} /></div><h3>Corporate subtitles, incoming.</h3><p>Paste a workplace message and hit translate.</p></div>}
+                {hasTranslated ? <div className="funny-translation"><div><strong>🤖 THE REAL TRANSLATION:</strong><p>{translatedMessage}</p></div></div> : <div className="empty-result"><div className="empty-icon"><Sparkles size={25} /></div><h3>Corporate subtitles, incoming.</h3><p>Paste a workplace message and hit translate.</p></div>}
               </>
             ) : <>
             <div className="result-header"><div><span className="step-label">02 / INTELLIGENCE</span><h2>What’s the catch?</h2></div><button className="text-button" onClick={copyReport} disabled={!hasAnalyzed}><Copy size={14} /> Copy report</button></div>
