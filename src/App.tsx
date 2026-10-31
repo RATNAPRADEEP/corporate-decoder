@@ -30,14 +30,15 @@ const severityClass: Record<string, string> = {
 export default function App() {
   const [message, setMessage] = useState(samples[0].text);
   const [mode, setMode] = useState<"risk" | "translator">("risk");
-  const [translatorMessage, setTranslatorMessage] = useState("");
   const [hasTranslated, setHasTranslated] = useState(false);
+  const [includeRiskAssessment, setIncludeRiskAssessment] = useState(false);
   const [sensitivity, setSensitivity] = useState<Sensitivity>("balanced");
   const [hasAnalyzed, setHasAnalyzed] = useState(true);
   const [showPrivacy, setShowPrivacy] = useState(false);
   const result = useMemo(() => analyzeMessage(message, sensitivity), [message, sensitivity]);
   const severity = hasAnalyzed ? result.severity : "None";
-  const translatedMessage = useMemo(() => translateCorporateMessage(translatorMessage), [translatorMessage]);
+  const translatedMessage = useMemo(() => translateCorporateMessage(message), [message]);
+  const translatorRiskResult = useMemo(() => analyzeMessage(message, sensitivity), [message, sensitivity]);
 
   async function copyReport() {
     const report = [
@@ -91,12 +92,13 @@ export default function App() {
               {samples.map((sample) => <button key={sample.label} className="sample-chip" onClick={() => { setMessage(sample.text); setHasAnalyzed(true); }}>{sample.label}</button>)}
             </div>}
             <label className="sr-only" htmlFor="message">Message to analyze</label>
-            <textarea id="message" value={mode === "risk" ? message : translatorMessage} onChange={(event) => { if (mode === "risk") { setMessage(event.target.value); setHasAnalyzed(false); } else { setTranslatorMessage(event.target.value); setHasTranslated(false); } }} placeholder={mode === "risk" ? "Paste an email, job offer, payment request, contract clause, or chat message..." : "Paste a corporate email, job ad, manager message, or workplace conversation..."} maxLength={12000} />
+            <textarea id="message" value={message} onChange={(event) => { setMessage(event.target.value); setHasAnalyzed(false); setHasTranslated(false); }} placeholder="Paste an email, job ad, offer, payment request, contract clause, or workplace message..." maxLength={12000} />
             <div className="composer-footer">
-              <span>{(mode === "risk" ? message : translatorMessage).length.toLocaleString()} / 12,000 characters</span>
-              {mode === "risk" ? <button className="analyze-button" disabled={!message.trim()} onClick={() => setHasAnalyzed(true)}><ScanSearch size={17} /> Decode this message <ArrowRight size={16} /></button> : <button className="analyze-button translator-button" disabled={!translatorMessage.trim()} onClick={() => setHasTranslated(true)}><Sparkles size={17} /> Translate the corporate <ArrowRight size={16} /></button>}
+              <span>{message.length.toLocaleString()} / 12,000 characters</span>
+              {mode === "risk" ? <button className="analyze-button" disabled={!message.trim()} onClick={() => setHasAnalyzed(true)}><ScanSearch size={17} /> Decode this message <ArrowRight size={16} /></button> : <button className="analyze-button translator-button" disabled={!message.trim()} onClick={() => setHasTranslated(true)}><Sparkles size={17} /> Translate the corporate <ArrowRight size={16} /></button>}
             </div>
-            {mode === "risk" && <div className="sensitivity-row">
+            {mode === "translator" && <label className="merge-option"><input type="checkbox" checked={includeRiskAssessment} onChange={(event) => setIncludeRiskAssessment(event.target.checked)} /><span><strong>Also run Risk Detector</strong><small>Assess this same message alongside the funny translation.</small></span></label>}
+            {(mode === "risk" || (mode === "translator" && includeRiskAssessment)) && <div className="sensitivity-row">
               <span>DETECTION SENSITIVITY</span>
               <div className="segmented">
                 {(["relaxed", "balanced", "strict"] as const).map((value) => <button key={value} className={sensitivity === value ? "selected" : ""} onClick={() => { setSensitivity(value); setHasAnalyzed(true); }}>{value}</button>)}
@@ -107,7 +109,27 @@ export default function App() {
           <section className={`result-column ${mode === "translator" ? "translator-result-column" : ""}`} aria-live="polite">
             {mode === "translator" ? (
               <><div className="result-header"><div><span className="step-label">02 / TRANSLATION</span><h2>Corporate, decoded.</h2></div></div>
-                {hasTranslated ? <div className="funny-translation"><div><strong>🤖 THE REAL TRANSLATION:</strong><p>{translatedMessage}</p></div></div> : <div className="empty-result"><div className="empty-icon"><Sparkles size={25} /></div><h3>Corporate subtitles, incoming.</h3><p>Paste a workplace message and hit translate.</p></div>}
+                {hasTranslated ? <>
+                  <div className="funny-translation"><div><strong>🤖 THE REAL TRANSLATION:</strong><p>{translatedMessage}</p></div></div>
+                  {includeRiskAssessment && <div className="translator-risk-block">
+                    <div className="section-caption"><span>RISK DETECTOR · SAME MESSAGE</span><span>{translatorRiskResult.findings.length} SIGNALS</span></div>
+                    <div className={`risk-card ${severityClass[translatorRiskResult.severity]}`}>
+                      <div className="risk-topline"><span>OVERALL RISK INDICATOR</span><span className="risk-status">{translatorRiskResult.severity === "None" ? <CheckCircle2 size={14} /> : <AlertTriangle size={14} />}{translatorRiskResult.severity.toUpperCase()}</span></div>
+                      <div className="risk-score-row"><strong>{translatorRiskResult.score}<small>/100</small></strong><div className="score-track"><span style={{ width: `${translatorRiskResult.score}%` }} /></div></div>
+                      <p>{translatorRiskResult.summary}</p>
+                      <div className="risk-foot"><span>{translatorRiskResult.findings.length} signal(s) matched</span><span>Match confidence: {translatorRiskResult.confidence}%</span></div>
+                    </div>
+                    {translatorRiskResult.findings.length === 0 ? <div className="finding-card clean"><CheckCircle2 size={19} /><div><strong>No configured indicators found</strong><p>This is not proof the message is safe. The detector only checks its current rules.</p></div></div> : translatorRiskResult.findings.map((finding, index) => <article className="finding-card" key={finding.title}>
+                      <div className="finding-index">0{index + 1}</div><div className="finding-body">
+                        <div className="finding-meta"><span>{finding.category}</span><span className={`mini-severity ${severityClass[finding.severity]}`}>{finding.severity}</span></div>
+                        <h3>{finding.title}</h3><blockquote>“{finding.evidence}”</blockquote><p>{finding.whyItMatters}</p>
+                        <details><summary><ClipboardCheck size={14} /> What to verify <ChevronDown size={14} /></summary><ul>{finding.verify.map((item) => <li key={item}>{item}</li>)}</ul></details>
+                      </div>
+                    </article>)}
+                    {translatorRiskResult.suggestedChecks.length > 0 && <div className="checks-card"><h3><ClipboardCheck size={16} /> Before you respond</h3><ul>{translatorRiskResult.suggestedChecks.map((item) => <li key={item}>{item}</li>)}</ul></div>}
+                    <p className="disclaimer"><CircleHelp size={14} /> {translatorRiskResult.disclaimer}</p>
+                  </div>}
+                </> : <div className="empty-result"><div className="empty-icon"><Sparkles size={25} /></div><h3>Corporate subtitles, incoming.</h3><p>Paste a message and hit translate. Switch modes to assess the same text.</p></div>}
               </>
             ) : <>
             <div className="result-header"><div><span className="step-label">02 / INTELLIGENCE</span><h2>What’s the catch?</h2></div><button className="text-button" onClick={copyReport} disabled={!hasAnalyzed}><Copy size={14} /> Copy report</button></div>
