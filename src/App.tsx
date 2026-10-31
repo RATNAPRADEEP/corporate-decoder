@@ -31,7 +31,7 @@ export default function App() {
   const [message, setMessage] = useState(samples[0].text);
   const [mode, setMode] = useState<"risk" | "translator">("risk");
   const [hasTranslated, setHasTranslated] = useState(false);
-  const [includeRiskAssessment, setIncludeRiskAssessment] = useState(false);
+  const [includeRiskAssessment, setIncludeRiskAssessment] = useState(true);
   const [sensitivity, setSensitivity] = useState<Sensitivity>("balanced");
   const [hasAnalyzed, setHasAnalyzed] = useState(true);
   const [showPrivacy, setShowPrivacy] = useState(false);
