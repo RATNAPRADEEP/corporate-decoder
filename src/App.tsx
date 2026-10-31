@@ -84,7 +84,7 @@ export default function App() {
               <span className="privacy-inline"><LockKeyhole size={13} /> Stays in this browser</span>
             </div>
             <div className="mode-switch" role="group" aria-label="Choose decoder mode">
-              <button className={mode === "risk" ? "active" : ""} onClick={() => setMode("risk")}><Shield size={15} /> Risk Detector</button>
+              <button className={mode === "risk" ? "active" : ""} onClick={() => setMode("risk")}><Shield size={15} /> Detailed Analysis</button>
               <button className={mode === "translator" ? "active" : ""} onClick={() => setMode("translator")}><Sparkles size={15} /> Funny Translator</button>
             </div>
             {mode === "risk" && <div className="sample-row">
@@ -95,7 +95,7 @@ export default function App() {
             <textarea id="message" value={message} onChange={(event) => { setMessage(event.target.value); setHasAnalyzed(false); setHasTranslated(false); }} placeholder="Paste an email, job ad, offer, payment request, contract clause, or workplace message..." maxLength={12000} />
             <div className="composer-footer">
               <span>{message.length.toLocaleString()} / 12,000 characters</span>
-              {mode === "risk" ? <button className="analyze-button" disabled={!message.trim()} onClick={() => setHasAnalyzed(true)}><ScanSearch size={17} /> Decode this message <ArrowRight size={16} /></button> : <button className="analyze-button translator-button" disabled={!message.trim()} onClick={() => setHasTranslated(true)}><Sparkles size={17} /> Translate the corporate <ArrowRight size={16} /></button>}
+              {mode === "risk" ? <button className="analyze-button" disabled={!message.trim()} onClick={() => setHasAnalyzed(true)}><ScanSearch size={17} /> Run full assessment <ArrowRight size={16} /></button> : <button className="analyze-button translator-button" disabled={!message.trim()} onClick={() => setHasTranslated(true)}><Sparkles size={17} /> Translate the corporate <ArrowRight size={16} /></button>}
             </div>
             {mode === "translator" && <label className="merge-option"><input type="checkbox" checked={includeRiskAssessment} onChange={(event) => setIncludeRiskAssessment(event.target.checked)} /><span><strong>Also run Risk Detector</strong><small>Assess this same message alongside the funny translation.</small></span></label>}
             {(mode === "risk" || (mode === "translator" && includeRiskAssessment)) && <div className="sensitivity-row">
@@ -132,7 +132,7 @@ export default function App() {
                 </> : <div className="empty-result"><div className="empty-icon"><Sparkles size={25} /></div><h3>Corporate subtitles, incoming.</h3><p>Paste a message and hit translate. Switch modes to assess the same text.</p></div>}
               </>
             ) : <>
-            <div className="result-header"><div><span className="step-label">02 / INTELLIGENCE</span><h2>What’s the catch?</h2></div><button className="text-button" onClick={copyReport} disabled={!hasAnalyzed}><Copy size={14} /> Copy report</button></div>
+            <div className="result-header"><div><span className="step-label">02 / INTELLIGENCE</span><h2>Detailed risk report</h2></div><button className="text-button" onClick={copyReport} disabled={!hasAnalyzed}><Copy size={14} /> Copy report</button></div>
             {!hasAnalyzed ? (
               <div className="empty-result"><div className="empty-icon"><MessageSquareText size={25} /></div><h3>Message changed</h3><p>Decode it to refresh the risk assessment.</p><button className="analyze-button" onClick={() => setHasAnalyzed(true)}><ScanSearch size={16} /> Analyze now</button></div>
             ) : (
