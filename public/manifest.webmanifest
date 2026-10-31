@@ -1,0 +1,10 @@
+{
+  "name": "Corporate Decoder",
+  "short_name": "Decoder",
+  "description": "Decode messages and spot potential risks before you decide.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b1120",
+  "theme_color": "#111827",
+  "icons": [{ "src": "/shield.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
