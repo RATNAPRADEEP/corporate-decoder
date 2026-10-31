@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { AlertTriangle, ArrowRight, Bell, CheckCircle2, ChevronDown, CircleHelp, ClipboardCheck, Copy, Eye, LockKeyhole, MessageSquareText, ScanSearch, Shield, ShieldAlert, Sparkles, X } from "lucide-react";
+import { AlertTriangle, ArrowRight, Bell, CheckCircle2, ChevronDown, CircleHelp, ClipboardCheck, Copy, Eye, FileText, LockKeyhole, MessageSquareText, ScanSearch, Shield, ShieldAlert, Sparkles, X } from "lucide-react";
+import DeepReading from "./DeepReading";
 import { analyzeMessage } from "./engine/analyzeMessage";
 import { translateCorporateMessage } from "./engine/translateCorporate";
 import type { Sensitivity } from "./engine/types";
@@ -29,7 +30,7 @@ const severityClass: Record<string, string> = {
 
 export default function App() {
   const [message, setMessage] = useState(samples[0].text);
-  const [mode, setMode] = useState<"risk" | "translator">("risk");
+  const [mode, setMode] = useState<"deep" | "translator">("deep");
   const [hasTranslated, setHasTranslated] = useState(false);
   const [includeRiskAssessment, setIncludeRiskAssessment] = useState(true);
   const [sensitivity, setSensitivity] = useState<Sensitivity>("balanced");
@@ -84,21 +85,21 @@ export default function App() {
               <span className="privacy-inline"><LockKeyhole size={13} /> Stays in this browser</span>
             </div>
             <div className="mode-switch" role="group" aria-label="Choose decoder mode">
-              <button className={mode === "risk" ? "active" : ""} onClick={() => setMode("risk")}><Shield size={15} /> Detailed Analysis</button>
+              <button className={mode === "deep" ? "active" : ""} onClick={() => setMode("deep")}><FileText size={15} /> Deep Reading</button>
               <button className={mode === "translator" ? "active" : ""} onClick={() => setMode("translator")}><Sparkles size={15} /> Funny Translator</button>
             </div>
-            {mode === "risk" && <div className="sample-row">
+            {mode === "deep" && <div className="sample-row">
               <span>TRY AN EXAMPLE</span>
               {samples.map((sample) => <button key={sample.label} className="sample-chip" onClick={() => { setMessage(sample.text); setHasAnalyzed(true); }}>{sample.label}</button>)}
             </div>}
             <label className="sr-only" htmlFor="message">Message to analyze</label>
-            <textarea id="message" value={message} onChange={(event) => { setMessage(event.target.value); setHasAnalyzed(false); setHasTranslated(false); }} placeholder="Paste an email, job ad, offer, payment request, contract clause, or workplace message..." maxLength={12000} />
+            <textarea id="message" value={message} onChange={(event) => { setMessage(event.target.value); setHasAnalyzed(false); setHasTranslated(false); }} placeholder={mode === "deep" ? "Paste a long document or message here, or upload a file above…" : "Paste an email, job ad, offer, payment request, contract clause, or workplace message..."} maxLength={250000} />
             <div className="composer-footer">
-              <span>{message.length.toLocaleString()} / 12,000 characters</span>
-              {mode === "risk" ? <button className="analyze-button" disabled={!message.trim()} onClick={() => setHasAnalyzed(true)}><ScanSearch size={17} /> Run full assessment <ArrowRight size={16} /></button> : <button className="analyze-button translator-button" disabled={!message.trim()} onClick={() => setHasTranslated(true)}><Sparkles size={17} /> Translate the corporate <ArrowRight size={16} /></button>}
+              <span>{message.length.toLocaleString()} / 250,000 characters</span>
+              {mode === "deep" ? <span className="deep-inline-hint">Local document reading</span> : <button className="analyze-button translator-button" disabled={!message.trim()} onClick={() => setHasTranslated(true)}><Sparkles size={17} /> Translate the corporate <ArrowRight size={16} /></button>}
             </div>
-            {mode === "translator" && <label className="merge-option"><input type="checkbox" checked={includeRiskAssessment} onChange={(event) => setIncludeRiskAssessment(event.target.checked)} /><span><strong>Also run Risk Detector</strong><small>Assess this same message alongside the funny translation.</small></span></label>}
-            {(mode === "risk" || (mode === "translator" && includeRiskAssessment)) && <div className="sensitivity-row">
+            {mode === "translator" && <label className="merge-option"><input type="checkbox" checked={includeRiskAssessment} onChange={(event) => setIncludeRiskAssessment(event.target.checked)} /><span><strong>Also run Detailed Analysis</strong><small>Assess this same message alongside the funny translation.</small></span></label>}
+            {(mode === "translator" && includeRiskAssessment) && <div className="sensitivity-row">
               <span>DETECTION SENSITIVITY</span>
               <div className="segmented">
                 {(["relaxed", "balanced", "strict"] as const).map((value) => <button key={value} className={sensitivity === value ? "selected" : ""} onClick={() => { setSensitivity(value); setHasAnalyzed(true); }}>{value}</button>)}
@@ -107,12 +108,12 @@ export default function App() {
           </section>
 
           <section className={`result-column ${mode === "translator" ? "translator-result-column" : ""}`} aria-live="polite">
-            {mode === "translator" ? (
+            {mode === "deep" ? <><div className="result-header"><div><span className="step-label">02 / DOCUMENT INTELLIGENCE</span><h2>Deep Reading</h2></div></div><DeepReading text={message} onTextChange={(value) => { setMessage(value); setHasAnalyzed(true); setHasTranslated(true); }} sensitivity={sensitivity} /></> : mode === "translator" ? (
               <><div className="result-header"><div><span className="step-label">02 / TRANSLATION</span><h2>Corporate, decoded.</h2></div></div>
                 {hasTranslated ? <>
                   <div className="funny-translation"><div><strong>🤖 THE REAL TRANSLATION:</strong><p>{translatedMessage}</p></div></div>
                   {includeRiskAssessment && <div className="translator-risk-block">
-                    <div className="section-caption"><span>RISK DETECTOR · SAME MESSAGE</span><span>{translatorRiskResult.findings.length} SIGNALS</span></div>
+                    <div className="section-caption"><span>DETAILED ANALYSIS · SAME MESSAGE</span><span>{translatorRiskResult.findings.length} SIGNALS</span></div>
                     <div className={`risk-card ${severityClass[translatorRiskResult.severity]}`}>
                       <div className="risk-topline"><span>OVERALL RISK INDICATOR</span><span className="risk-status">{translatorRiskResult.severity === "None" ? <CheckCircle2 size={14} /> : <AlertTriangle size={14} />}{translatorRiskResult.severity.toUpperCase()}</span></div>
                       <div className="risk-score-row"><strong>{translatorRiskResult.score}<small>/100</small></strong><div className="score-track"><span style={{ width: `${translatorRiskResult.score}%` }} /></div></div>
@@ -181,8 +182,8 @@ export default function App() {
           <button className="modal-close" onClick={() => setShowPrivacy(false)} aria-label="Close privacy details"><X size={18} /></button>
           <div className="modal-icon"><LockKeyhole size={22} /></div>
           <h2 id="privacy-title">Privacy in this demo</h2>
-          <p>Your message is analyzed locally by rules bundled with this app. It is not sent to an AI service or stored by a Corporate Decoder backend.</p>
-          <ul><li>No inbox access or OAuth connection.</li><li>No notification permission requested.</li><li>No message history saved.</li><li>Do not paste passwords, OTPs, or payment secrets.</li></ul>
+          <p>Your message is processed in this browser. Document extraction and OCR run locally; no document is uploaded to a Corporate Decoder backend. OCR may download open-source language data.</p>
+          <ul><li>No inbox access or OAuth connection.</li><li>No notification permission requested.</li><li>No message history saved.</li><li>PDF, DOCX and image extraction happens on your device.</li><li>Do not paste passwords, OTPs, or payment secrets.</li></ul>
           <button className="analyze-button full-button" onClick={() => setShowPrivacy(false)}>Got it</button>
         </div>
       </div>}
