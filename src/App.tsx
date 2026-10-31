@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { AlertTriangle, ArrowRight, Bell, CheckCircle2, ChevronDown, CircleHelp, ClipboardCheck, Copy, Eye, LockKeyhole, MessageSquareText, ScanSearch, Shield, ShieldAlert, Sparkles, X } from "lucide-react";
 import { analyzeMessage } from "./engine/analyzeMessage";
+import { translateCorporateMessage } from "./engine/translateCorporate";
 import type { Sensitivity } from "./engine/types";
 
 const samples = [
@@ -28,11 +29,14 @@ const severityClass: Record<string, string> = {
 
 export default function App() {
   const [message, setMessage] = useState(samples[0].text);
+  const [mode, setMode] = useState<"risk" | "translator">("risk");
+  const [hasTranslated, setHasTranslated] = useState(false);
   const [sensitivity, setSensitivity] = useState<Sensitivity>("balanced");
   const [hasAnalyzed, setHasAnalyzed] = useState(true);
   const [showPrivacy, setShowPrivacy] = useState(false);
   const result = useMemo(() => analyzeMessage(message, sensitivity), [message, sensitivity]);
   const severity = hasAnalyzed ? result.severity : "None";
+  const translatedMessage = useMemo(() => translateCorporateMessage(message), [message]);
 
   async function copyReport() {
     const report = [
@@ -77,25 +81,34 @@ export default function App() {
               <div><span className="step-label">01 / INPUT</span><h2>Drop the message</h2></div>
               <span className="privacy-inline"><LockKeyhole size={13} /> Stays in this browser</span>
             </div>
-            <div className="sample-row">
+            <div className="mode-switch" role="group" aria-label="Choose decoder mode">
+              <button className={mode === "risk" ? "active" : ""} onClick={() => setMode("risk")}><Shield size={15} /> Risk Detector</button>
+              <button className={mode === "translator" ? "active" : ""} onClick={() => setMode("translator")}><Sparkles size={15} /> Funny Translator</button>
+            </div>
+            {mode === "risk" && <div className="sample-row">
               <span>TRY AN EXAMPLE</span>
               {samples.map((sample) => <button key={sample.label} className="sample-chip" onClick={() => { setMessage(sample.text); setHasAnalyzed(true); }}>{sample.label}</button>)}
-            </div>
+            </div>}
             <label className="sr-only" htmlFor="message">Message to analyze</label>
-            <textarea id="message" value={message} onChange={(event) => { setMessage(event.target.value); setHasAnalyzed(false); }} placeholder="Paste an email, job offer, payment request, contract clause, or chat message..." maxLength={12000} />
+            <textarea id="message" value={message} onChange={(event) => { setMessage(event.target.value); setHasAnalyzed(false); setHasTranslated(false); }} placeholder={mode === "risk" ? "Paste an email, job offer, payment request, contract clause, or chat message..." : "Paste a corporate email, job ad, manager message, or workplace conversation..."} maxLength={12000} />
             <div className="composer-footer">
               <span>{message.length.toLocaleString()} / 12,000 characters</span>
-              <button className="analyze-button" disabled={!message.trim()} onClick={() => setHasAnalyzed(true)}><ScanSearch size={17} /> Decode this message <ArrowRight size={16} /></button>
+              {mode === "risk" ? <button className="analyze-button" disabled={!message.trim()} onClick={() => setHasAnalyzed(true)}><ScanSearch size={17} /> Decode this message <ArrowRight size={16} /></button> : <button className="analyze-button translator-button" disabled={!message.trim()} onClick={() => setHasTranslated(true)}><Sparkles size={17} /> Translate the corporate <ArrowRight size={16} /></button>}
             </div>
-            <div className="sensitivity-row">
+            {mode === "risk" && <div className="sensitivity-row">
               <span>DETECTION SENSITIVITY</span>
               <div className="segmented">
                 {(["relaxed", "balanced", "strict"] as const).map((value) => <button key={value} className={sensitivity === value ? "selected" : ""} onClick={() => { setSensitivity(value); setHasAnalyzed(true); }}>{value}</button>)}
               </div>
-            </div>
+            </div>}
           </section>
 
-          <section className="result-column" aria-live="polite">
+          <section className={`result-column ${mode === "translator" ? "translator-result-column" : ""}`} aria-live="polite">
+            {mode === "translator" ? (
+              <><div className="result-header"><div><span className="step-label">02 / TRANSLATION</span><h2>Corporate, decoded.</h2></div></div>
+                {hasTranslated ? <div className="funny-translation"><div><strong>📩 WHAT THEY SAID:</strong><p>{message}</p></div><div><strong>🤖 MESSAGE FOR YOU:</strong><p>{translatedMessage}</p></div></div> : <div className="empty-result"><div className="empty-icon"><Sparkles size={25} /></div><h3>Corporate subtitles, incoming.</h3><p>Paste a workplace message and hit translate.</p></div>}
+              </>
+            ) : <>
             <div className="result-header"><div><span className="step-label">02 / INTELLIGENCE</span><h2>What’s the catch?</h2></div><button className="text-button" onClick={copyReport} disabled={!hasAnalyzed}><Copy size={14} /> Copy report</button></div>
             {!hasAnalyzed ? (
               <div className="empty-result"><div className="empty-icon"><MessageSquareText size={25} /></div><h3>Message changed</h3><p>Decode it to refresh the risk assessment.</p><button className="analyze-button" onClick={() => setHasAnalyzed(true)}><ScanSearch size={16} /> Analyze now</button></div>
@@ -130,6 +143,7 @@ export default function App() {
                 <p className="disclaimer"><CircleHelp size={14} /> {result.disclaimer}</p>
               </>
             )}
+            </>}
           </section>
         </div>
 
