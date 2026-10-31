@@ -18,3 +18,13 @@
 .funny-translation strong{font:700 10px 'DM Mono',monospace;letter-spacing:.7px;color:#d9a9f3}
 .funny-translation p{white-space:pre-wrap;overflow-wrap:anywhere;font:600 14px/1.75 Manrope,sans-serif;color:#f0eaf4;margin:10px 0 0}
 @media(max-width:560px){.mode-switch button{font-size:10px;padding:9px 5px;gap:5px}.funny-translation>div{padding:15px}.funny-translation p{font-size:13px}}
+
+
+/* Optional combined risk assessment in Funny Translator mode */
+.merge-option{display:flex;align-items:center;gap:10px;margin-top:15px;padding:10px 12px;border:1px solid #39445a;border-radius:7px;background:#111b2b;cursor:pointer}
+.merge-option input{width:14px;height:14px;accent-color:#d9a9f3;flex-shrink:0}
+.merge-option span{display:flex;flex-direction:column;gap:3px}
+.merge-option strong{font-size:10px;color:#d9c4e7;font-weight:700}
+.merge-option small{font-size:9px;color:#8492a7;line-height:1.4}
+.translator-risk-block{margin-top:18px}
+.translator-risk-block .section-caption{margin-top:0}
